@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Business Acquisition Evaluator</title>
+<style>
+body{font-family:Arial,sans-serif;background:#f5f5f5;padding:20px;margin:0}
+.container{max-width:1200px;margin:0 auto;background:white;padding:30px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,0.1)}
+h1{color:#1a365d;margin-bottom:10px}
+.subtitle{color:#666;margin-bottom:20px;font-size:14px}
+button{padding:10px 20px;margin:5px;border:none;border-radius:4px;cursor:pointer;font-size:14px;font-weight:600}
+.btn-primary{background:#2c5282;color:white}
+.btn-success{background:#38a169;color:white}
+.btn-research{background:#ed8936;color:white}
+.tabs{display:flex;gap:10px;margin:20px 0;border-bottom:2px solid #e2e8f0}
+.tab{padding:12px 24px;background:none;border:none;cursor:pointer;font-size:15px;color:#666;border-bottom:3px solid transparent}
+.tab.active{color:#2c5282;border-bottom-color:#2c5282;font-weight:600}
+.tab-content{display:none}
+.tab-content.active{display:block}
+table{width:100%;border-collapse:collapse;margin:20px 0}
+th{background:#2c5282;color:white;padding:12px;text-align:left}
+td{padding:10px 12px;border:1px solid #e2e8f0}
+tr:nth-child(even){background:#f8fafc}
+.section-header{background:#4a5568;color:white;font-weight:bold;text-align:center}
+.label-cell{font-weight:500;width:40%}
+.input-cell{width:30%}
+.result-cell{width:30%;background:#edf2f7;font-weight:600;color:#2c5282}
+input[type="number"],input[type="text"],select{width:100%;padding:8px;border:1px solid #cbd5e0;border-radius:4px}
+input[type="range"]{width:100%}
+.metric-box{display:inline-block;padding:20px;margin:10px;border-radius:8px;min-width:200px;text-align:center;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white}
+.metric-value{font-size:36px;font-weight:bold}
+.highlight-row{background:#fef5e7}
+.research-box{background:#fff5f5;border:2px solid #fc8181;border-radius:8px;padding:20px;margin:20px 0}
+.research-results{background:#f0fff4;border:2px solid #68d391;border-radius:8px;padding:15px;margin:10px 0}
+.loading{color:#ed8936;font-weight:bold}
+.industry-benchmark{background:#e6fffa;padding:10px;margin:5px 0;border-left:4px solid #319795}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Business Acquisition Evaluator</h1>
+<p class="subtitle">Evaluate small business acquisition opportunities with AI-powered industry research</p>
+<div>
+<button class="btn-primary" id="addDealBtn">Add New Deal</button>
+<button class="btn-success" id="exportBtn">Export to CSV</button>
+</div>
+<div style="margin:20px 0">
+<label><strong>Select Deal:</strong></label>
+<select id="dealSelector"></select>
+</div>
+<div class="tabs">
+<button class="tab active" data-tab="dashboard">Dashboard</button>
+<button class="tab" data-tab="financial">Financial Analysis</button>
+<button class="tab" data-tab="industry">Industry Research</button>
+<button class="tab" data-tab="quality">Quality Scorecard</button>
+<button class="tab" data-tab="comparison">Deal Comparison</button>
+</div>
+<div id="dashboard" class="tab-content active">
+<h2>Deal Overview</h2>
+<div style="text-align:center;margin:30px 0">
+<div class="metric-box">
+<div>Overall Score</div>
+<div class="metric-value" id="overallScore">0</div>
+<div style="font-size:14px">out of 100</div>
+</div>
+<div class="metric-box">
+<div>Cash-on-Cash</div>
+<div class="metric-value" id="cocReturn">0%</div>
+</div>
+<div class="metric-box">
+<div>Multiple</div>
+<div class="metric-value" id="multiple">0x</div>
+</div>
+</div>
+<table>
+<tr><th colspan="2">Key Financial Metrics</th></tr>
+<tr><td class="label-cell">Asking Price</td><td class="result-cell" id="dash_askingPrice">$0</td></tr>
+<tr><td class="label-cell">SDE</td><td class="result-cell" id="dash_sde">$0</td></tr>
+<tr><td class="label-cell">Revenue</td><td class="result-cell" id="dash_revenue">$0</td></tr>
+<tr><td class="label-cell">Total Assets Included</td><td class="result-cell" id="dash_assets">$0</td></tr>
+<tr><td class="label-cell">Asset-Adjusted Multiple</td><td class="result-cell" id="dash_adjMultiple">0x</td></tr>
+</table>
+<div id="industryComparison"></div>
+</div>
+<div id="financial" class="tab-content">
+<h2>Financial Analysis</h2>
+<table>
+<tr class="section-header"><td colspan="3">BUSINESS INFORMATION</td></tr>
+<tr><td class="label-cell">Business Name</td><td class="input-cell"><input type="text" id="businessName"></td><td></td></tr>
+<tr><td class="label-cell">Asking Price</td><td class="input-cell"><input type="number" id="askingPrice"></td><td></td></tr>
+<tr><td class="label-cell">SDE</td><td class="input-cell"><input type="number" id="sde"></td><td></td></tr>
+<tr><td class="label-cell">Revenue</td><td class="input-cell"><input type="number" id="revenue"></td><td></td></tr>
+<tr><td class="label-cell">Gross Margin (%)</td><td class="input-cell"><input type="number" id="grossMargin"></td><td></td></tr>
+</table>
+<table>
+<tr class="section-header"><td colspan="3">ASSETS INCLUDED</td></tr>
+<tr><td class="label-cell">Inventory Value</td><td class="input-cell"><input type="number" id="inventoryValue"></td><td></td></tr>
+<tr><td class="label-cell">Real Estate Value</td><td class="input-cell"><input type="number" id="realEstateValue"></td><td></td></tr>
+<tr><td class="label-cell">Equipment Value</td><td class="input-cell"><input type="number" id="equipmentValue"></td><td></td></tr>
+<tr class="highlight-row"><td class="label-cell">Total Asset Value</td><td></td><td class="result-cell" id="calc_totalAssets">$0</td></tr>
+<tr class="highlight-row"><td class="label-cell">Asset-Adjusted Multiple</td><td></td><td class="result-cell" id="calc_assetAdjustedMultiple">0x</td></tr>
+</table>
+<table>
+<tr class="section-header"><td colspan="3">DEAL STRUCTURE</td></tr>
+<tr><td class="label-cell">Down Payment</td><td class="input-cell"><input type="number" id="downPayment"></td><td></td></tr>
+<tr><td class="label-cell">Seller Financing Amount</td><td class="input-cell"><input type="number" id="sellerFinancing"></td><td></td></tr>
+<tr><td class="label-cell">Seller Financing Rate (%)</td><td class="input-cell"><input type="number" id="sellerRate" step="0.1"></td><td></td></tr>
+<tr><td class="label-cell">Seller Financing Term (years)</td><td class="input-cell"><input type="number" id="sellerTerm"></td><td></td></tr>
+<tr><td class="label-cell">Bank Loan Amount</td><td class="input-cell"><input type="number" id="bankLoan"></td><td></td></tr>
+<tr><td class="label-cell">Bank Loan Rate (%)</td><td class="input-cell"><input type="number" id="bankRate" step="0.1"></td><td></td></tr>
+<tr><td class="label-cell">Bank Loan Term (years)</td><td class="input-cell"><input type="number" id="bankTerm"></td><td></td></tr>
+</table>
+<table>
+<tr class="section-header"><td colspan="3">CALCULATED RETURNS</td></tr>
+<tr class="highlight-row"><td class="label-cell">Multiple</td><td></td><td class="result-cell" id="calc_multiple">0x</td></tr>
+<tr class="highlight-row"><td class="label-cell">Cash-on-Cash Return</td><td></td><td class="result-cell" id="calc_coc">0%</td></tr>
+<tr class="highlight-row"><td class="label-cell">Payback Period</td><td></td><td class="result-cell" id="calc_payback">0 years</td></tr>
+<tr class="highlight-row"><td class="label-cell">ROI</td><td></td><td class="result-cell" id="calc_roi">0%</td></tr>
+<tr><td class="label-cell">Annual Debt Service</td><td></td><td class="result-cell" id="calc_debtService">$0</td></tr>
+<tr><td class="label-cell">Cash Flow After Debt</td><td></td><td class="result-cell" id="calc_cashFlow">$0</td></tr>
+</table>
+</div>
+<div id="industry" class="tab-content">
+<h2>Industry Research</h2>
+<div class="research-box">
+<h3>AI-Powered Industry Analysis</h3>
+<p>Select your industry to automatically research typical multiples, growth trends, and market conditions.</p>
+<div style="margin:20px 0">
+<label><strong>Industry Type:</strong></label>
+<select id="industryType" style="width:100%;padding:10px;margin:10px 0">
+<option value="">-- Select Industry --</option>
+<option value="restaurant">Restaurant / Food Service</option>
+<option value="retail">Retail Store</option>
+<option value="ecommerce">E-commerce / Online Retail</option>
+<option value="saas">SaaS / Software</option>
+<option value="manufacturing">Manufacturing</option>
+<option value="construction">Construction / Contracting</option>
+<option value="healthcare">Healthcare Services</option>
+<option value="automotive">Automotive Services</option>
+<option value="professional-services">Professional Services</option>
+<option value="home-services">Home Services</option>
+<option value="fitness">Fitness / Gym</option>
+<option value="beauty">Beauty / Salon</option>
+<option value="laundromat">Laundromat / Dry Cleaning</option>
+<option value="hvac">HVAC Services</option>
+<option value="landscaping">Landscaping</option>
+<option value="cleaning">Cleaning Services</option>
+<option value="pet-services">Pet Services</option>
+<option value="marketing">Marketing Agency</option>
+</select>
+</div>
+<button class="btn-research" id="researchBtn" style="width:100%;padding:15px;font-size:16px">Research Industry Data</button>
+<div id="researchStatus" style="margin-top:15px"></div>
+</div>
+<div id="researchResults"></div>
+<div style="margin-top:30px">
+<h3>Manual Industry Benchmarks (Optional)</h3>
+<p style="color:#666;font-size:14px">Override or supplement AI research with your own data</p>
+<table>
+<tr><td class="label-cell">Typical Multiple Range</td><td class="input-cell"><input type="text" id="typicalMultiple" placeholder="e.g., 2.5-3.5x"></td></tr>
+<tr><td class="label-cell">Industry Growth Rate (%)</td><td class="input-cell"><input type="number" id="industryGrowth" step="0.1"></td></tr>
+<tr><td class="label-cell">Typical Gross Margin (%)</td><td class="input-cell"><input type="number" id="typicalMargin" step="0.1"></td></tr>
+</table>
+</div>
+</div>
+<div id="quality" class="tab-content">
+<h2>Quality Scorecard</h2>
+<p style="margin-bottom:20px">Rate each factor from 1 (poor) to 10 (excellent)</p>
+<table>
+<tr class="section-header"><td colspan="3">BUSINESS QUALITY FACTORS</td></tr>
+<tr><td class="label-cell">Customer Concentration</td><td class="input-cell"><input type="range" id="customerConcentration" min="1" max="10" value="5"></td><td class="result-cell"><span id="score_customer">5</span> / 10</td></tr>
+<tr><td class="label-cell">Revenue Growth</td><td class="input-cell"><input type="range" id="revenueGrowth" min="1" max="10" value="5"></td><td class="result-cell"><span id="score_growth">5</span> / 10</td></tr>
+<tr><td class="label-cell">Margins</td><td class="input-cell"><input type="range" id="margins" min="1" max="10" value="5"></td><td class="result-cell"><span id="score_margins">5</span> / 10</td></tr>
+<tr><td class="label-cell">Owner Involvement</td><td class="input-cell"><input type="range" id="ownerInvolvement" min="1" max="10" value="5"></td><td class="result-cell"><span id="score_owner">5</span> / 10</td></tr>
+<tr><td class="label-cell">Employee Dependency</td><td class="input-cell"><input type="range" id="employeeDependency" min="1" max="10" value="5"></td><td class="result-cell"><span id="score_employee">5</span> / 10</td></tr>
+<tr><td class="label-cell">Market Position</td><td class="input-cell"><input type="range" id="marketPosition" min="1" max="10" value="5"></td><td class="result-cell"><span id="score_market">5</span> / 10</td></tr>
+<tr><td class="label-cell">Barriers to Entry</td><td class="input-cell"><input type="range" id="barriers" min="1" max="10" value="5"></td><td class="result-cell"><span id="score_barriers">5</span> / 10</td></tr>
+<tr><td class="label-cell">Industry Trends</td><td class="input-cell"><input type="range" id="industryTrends" min="1" max="10" value="5"></td><td class="result-cell"><span id="score_industry">5</span> / 10</td></tr>
+<tr><td class="label-cell">Supplier Dependency</td><td class="input-cell"><input type="range" id="supplierDependency" min="1" max="10" value="5"></td><td class="result-cell"><span id="score_supplier">5</span> / 10</td></tr>
+<tr class="section-header"><td colspan="3">OVERALL QUALITY SCORE</td></tr>
+<tr class="highlight-row"><td class="label-cell">Weighted Quality Score</td><td></td><td class="result-cell" id="totalQualityScore">0 / 10</td></tr>
+</table>
+</div>
+<div id="comparison" class="tab-content">
+<h2>Deal Comparison</h2>
+<div id="comparisonTable"></div>
+</div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.26.0/babel.min.js"></script>
+const BRAVE_API_KEY = 'BSAnsqsEBTGyvdcNuJf0dMxSiGqWG55';
+
+let deals = [{
+  name: 'Sample Business',
+  askingPrice: 500000,
+  sde: 150000,
+  revenue: 800000,
+  grossMargin: 45,
+  inventoryValue: 50000,
+  realEstateValue: 0,
+  equipmentValue: 30000,
+  downPayment: 150000,
+  sellerFinancing: 200000,
+  sellerRate: 6,
+  sellerTerm: 5,
+  bankLoan: 150000,
+  bankRate: 8,
+  bankTerm: 7,
+  customerConcentration: 7,
+  revenueGrowth: 6,
+  margins: 7,
+  ownerInvolvement: 5,
+  employeeDependency: 6,
+  marketPosition: 7,
+  barriers: 6,
+  industryTrends: 7,
+  supplierDependency: 8,
+  industryType: '',
+  industryData: null
+}];
+
+let currentDealIndex = 0;
+
+function formatNumber(num) {
+  var str = Math.round(num).toString();
+  var result = '';
+  var count = 0;
+  for (var i = str.length - 1; i >= 0; i--) {
+    if (count === 3) {
+      result = ',' + result;
+      count = 0;
+    }
+    result = str[i] + result;
+    count++;
+  }
+  return result;
+}
+
+function calcDeal(d) {
+  var multiple = d.sde > 0 ? d.askingPrice / d.sde : 0;
+  var totalAssets = (d.inventoryValue || 0) + (d.realEstateValue || 0) + (d.equipmentValue || 0);
+  var adjustedPrice = d.askingPrice - totalAssets;
+  var assetAdjustedMultiple = d.sde > 0 ? adjustedPrice / d.sde : 0;
+  
+  var sellerMonthlyRate = d.sellerRate / 100 / 12;
+  var sellerPayments = d.sellerTerm * 12;
+  var sellerMonthlyPayment = 0;
+  if (d.sellerFinancing > 0 && sellerMonthlyRate > 0) {
+    var temp = Math.pow(1 + sellerMonthlyRate, sellerPayments);
+    sellerMonthlyPayment = d.sellerFinancing * (sellerMonthlyRate * temp) / (temp - 1);
+  }
+  
+  var bankMonthlyRate = d.bankRate / 100 / 12;
+  var bankPayments = d.bankTerm * 12;
+  var bankMonthlyPayment = 0;
+  if (d.bankLoan > 0 && bankMonthlyRate > 0) {
+    var temp = Math.pow(1 + bankMonthlyRate, bankPayments);
+    bankMonthlyPayment = d.bankLoan * (bankMonthlyRate * temp) / (temp - 1);
+  }
+  
+  var annualDebtService = (sellerMonthlyPayment + bankMonthlyPayment) * 12;
+  var cashFlowAfterDebt = d.sde - annualDebtService;
+  var cocReturn = d.downPayment > 0 ? (cashFlowAfterDebt / d.downPayment) * 100 : 0;
+  var paybackPeriod = cashFlowAfterDebt > 0 ? d.downPayment / cashFlowAfterDebt : 999;
+  var roi = d.askingPrice > 0 ? (d.sde / d.askingPrice) * 100 : 0;
+  
+  var qualityScore = 
+    d.customerConcentration * 0.15 +
+    d.revenueGrowth * 0.12 +
+    d.margins * 0.12 +
+    d.ownerInvolvement * 0.10 +
+    d.employeeDependency * 0.10 +
+    d.marketPosition * 0.13 +
+    d.barriers * 0.10 +
+    d.industryTrends * 0.10 +
+    d.supplierDependency * 0.08;
+  
+  var financialScore = 0;
+  if (multiple <= 2.5) financialScore += 25;
+  else if (multiple <= 3.5) financialScore += 20;
+  else if (multiple <= 4.5) financialScore += 15;
+  else if (multiple <= 6) financialScore += 10;
+  else financialScore += 5;
+  
+  if (cocReturn >= 40) financialScore += 25;
+  else if (cocReturn >= 30) financialScore += 20;
+  else if (cocReturn >= 20) financialScore += 15;
+  else if (cocReturn >= 15) financialScore += 10;
+  else financialScore += 5;
+  
+  if (paybackPeriod <= 3) financialScore += 25;
+  else if (paybackPeriod <= 4) financialScore += 20;
+  else if (paybackPeriod <= 5) financialScore += 15;
+  else if (paybackPeriod <= 7) financialScore += 10;
+  else financialScore += 5;
+  
+  if (roi >= 35) financialScore += 25;
+  else if (roi >= 28) financialScore += 20;
+  else if (roi >= 22) financialScore += 15;
+  else if (roi >= 18) financialScore += 10;
+  else financialScore += 5;
+  
+  var overallScore = (financialScore * 0.6) + (qualityScore * 10 * 0.4);
+  
+  return {
+    multiple: multiple,
+    totalAssets: totalAssets,
+    assetAdjustedMultiple: assetAdjustedMultiple,
+    cocReturn: cocReturn,
+    paybackPeriod: paybackPeriod,
+    roi: roi,
+    annualDebtService: annualDebtService,
+    cashFlowAfterDebt: cashFlowAfterDebt,
+    qualityScore: qualityScore,
+    overallScore: overallScore
+  };
+}
+
+async function researchIndustry() {
+  var industry = document.getElementById('industryType').value;
+  if (!industry) {
+    alert('Please select an industry first');
+    return;
+  }
+  
+  if (BRAVE_API_KEY === 'BSAnsqsEBTGyvdcNuJf0dMxSiGqWG55') {
+    alert('Please add your Brave Search API key. Find line with BRAVE_API_KEY in the code and replace YOUR_API_KEY_HERE with your actual key.');
+    return;
+  }
+  
+  var statusDiv = document.getElementById('researchStatus');
+  statusDiv.innerHTML = '<p class="loading">Researching... This may take 10-15 seconds.</p>';
+  
+  console.log('Starting research for:', industry);
+  
+  var searchQueries = [
+    industry + ' business typical valuation multiple 2024',
+    industry + ' business industry trends growth rate',
+    industry + ' small business acquisition multiples'
+  ];
+  
+  var allResults = [];
+  
+  try {
+    for (var i = 0; i < searchQueries.length; i++) {
+      var query = searchQueries[i];
+      console.log('Searching query ' + (i + 1) + ':', query);
+      
+      var apiUrl = 'https://api.search.brave.com/res/v1/web/search?q=' + encodeURIComponent(query);
+      var corsProxy = 'https://api.allorigins.win/raw?url=';
+      var url = corsProxy + encodeURIComponent(apiUrl);
+      
+      console.log('Fetching:', url);
+      
+      var response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'X-Subscription-Token': BRAVE_API_KEY
+        }
+      });
+      
+      console.log('Response status:', response.status);
+      
+      if (!response.ok) {
+        var errorText = await response.text();
+        console.error('API Error Response:', errorText);
+        throw new Error('API request failed with status ' + response.status);
+      }
+      
+      var data = await response.json();
+      console.log('API Response data:', data);
+      
+      if (data.web && data.web.results) {
+        allResults = allResults.concat(data.web.results.slice(0, 3));
+        console.log('Found ' + data.web.results.length + ' results for query ' + (i + 1));
+      }
+      
+      statusDiv.innerHTML = '<p class="loading">Researching... Query ' + (i + 1) + ' of ' + searchQueries.length + ' complete.</p>';
+    }
+    
+    console.log('Total results found:', allResults.length);
+    
+    if (allResults.length === 0) {
+      statusDiv.innerHTML = '<p style="color:orange"><strong>Note:</strong> No results found. The API may not be working through the proxy. You can still manually enter industry benchmarks below.</p>';
+    } else {
+      displayResearchResults(allResults, industry);
+      deals[currentDealIndex].industryData = allResults;
+    }
+    
+  } catch (error) {
+    console.error('Full error details:', error);
+    statusDiv.innerHTML = '<p style="color:red"><strong>Error:</strong> ' + error.message + '</p><p style="font-size:12px;color:#666;margin-top:10px"><strong>Why this happens:</strong><br>Brave Search API blocks direct browser requests due to CORS security. The CORS proxy may also be having issues.<br><br><strong>Workarounds:</strong><br>1. Use the Manual Industry Benchmarks section below<br>2. Research on Google/BizBuySell and enter data manually<br>3. Set up a proper backend server for API calls</p>';
+  }
+}
+
+function displayResearchResults(results, industry) {
+  const container = document.getElementById('researchResults');
+  const div = document.createElement('div');
+  div.className = 'research-results';
+  
+  const h3 = document.createElement('h3');
+  h3.textContent = `Industry Research Results for ${industry}`;
+  div.appendChild(h3);
+  
+  if (results.length === 0) {
+    const p = document.createElement('p');
+    p.textContent = 'No results found';
+    div.appendChild(p);
+  } else {
+    const resultsDiv = document.createElement('div');
+    resultsDiv.style.marginTop = '15px';
+    
+    for (let i = 0; i < Math.min(5, results.length); i++) {
+      const result = results[i];
+      const benchDiv = document.createElement('div');
+      benchDiv.className = 'industry-benchmark';
+      
+      const strong = document.createElement('strong');
+      strong.textContent = result.title || `Result ${i + 1}`;
+      benchDiv.appendChild(strong);
+      benchDiv.appendChild(document.createElement('br'));
+      
+      const p = document.createElement('p');
+      p.style.fontSize = '14px';
+      p.style.color = '#666';
+      p.style.margin = '5px 0';
+      p.textContent = result.description || '';
+      benchDiv.appendChild(p);
+      
+      const a = document.createElement('a');
+      a.href = result.url || '#';
+      a.target = '_blank';
+      a.style.fontSize = '12px';
+      a.style.color = '#2c5282';
+      a.textContent = 'Read more';
+      benchDiv.appendChild(a);
+      
+      resultsDiv.appendChild(benchDiv);
+    }
+    div.appendChild(resultsDiv);
+  }
+  
+  container.innerHTML = '';
+  container.appendChild(div);
+  
+  document.getElementById('researchStatus').innerHTML = '<p style="color:green">Complete!</p>';
+  updateIndustryComparison();
+}
+
+function updateIndustryComparison() {
+  const d = deals[currentDealIndex];
+  const r = calcDeal(d);
+  const container = document.getElementById('industryComparison');
+  const typicalMultiple = document.getElementById('typicalMultiple').value;
+  
+  if (typicalMultiple || d.industryData) {
+    const table = document.createElement('table');
+    table.style.marginTop = '20px';
+    
+    const thead = document.createElement('thead');
+    const tr = document.createElement('tr');
+    const th = document.createElement('th');
+    th.colSpan = 3;
+    th.textContent = 'Industry Comparison';
+    tr.appendChild(th);
+    thead.appendChild(tr);
+    table.appendChild(thead);
+    
+    if (typicalMultiple) {
+      const tbody = document.createElement('tbody');
+      const row = document.createElement('tr');
+      
+      const td1 = document.createElement('td');
+      td1.className = 'label-cell';
+      td1.textContent = 'Your Multiple';
+      
+      const td2 = document.createElement('td');
+      td2.className = 'result-cell';
+      td2.textContent = `${r.multiple.toFixed(2)}x`;
+      
+      const td3 = document.createElement('td');
+      td3.className = 'result-cell';
+      td3.textContent = `Industry: ${typicalMultiple}`;
+      
+      row.appendChild(td1);
+      row.appendChild(td2);
+      row.appendChild(td3);
+      tbody.appendChild(row);
+      table.appendChild(tbody);
+    }
+    
+    container.innerHTML = '';
+    container.appendChild(table);
+  } else {
+    container.innerHTML = '';
+  }
+}
+
+function updateDisplay() {
+  const d = deals[currentDealIndex];
+  const r = calcDeal(d);
+  
+  document.getElementById('overallScore').textContent = r.overallScore.toFixed(1);
+  document.getElementById('cocReturn').textContent = `${r.cocReturn.toFixed(1)}%`;
+  document.getElementById('multiple').textContent = `${r.multiple.toFixed(2)}x`;
+  
+  document.getElementById('dash_askingPrice').textContent = `$${formatNumber(d.askingPrice)}`;
+  document.getElementById('dash_sde').textContent = `$${formatNumber(d.sde)}`;
+  document.getElementById('dash_revenue').textContent = `$${formatNumber(d.revenue)}`;
+  document.getElementById('dash_assets').textContent = `$${formatNumber(r.totalAssets)}`;
+  document.getElementById('dash_adjMultiple').textContent = `${r.assetAdjustedMultiple.toFixed(2)}x`;
+  
+  document.getElementById('calc_multiple').textContent = `${r.multiple.toFixed(2)}x`;
+  document.getElementById('calc_totalAssets').textContent = `$${formatNumber(r.totalAssets)}`;
+  document.getElementById('calc_assetAdjustedMultiple').textContent = `${r.assetAdjustedMultiple.toFixed(2)}x`;
+  document.getElementById('calc_coc').textContent = `${r.cocReturn.toFixed(1)}%`;
+  document.getElementById('calc_payback').textContent = `${r.paybackPeriod.toFixed(1)} years`;
+  document.getElementById('calc_roi').textContent = `${r.roi.toFixed(1)}%`;
+  document.getElementById('calc_debtService').textContent = `$${formatNumber(r.annualDebtService)}`;
+  document.getElementById('calc_cashFlow').textContent = `$${formatNumber(r.cashFlowAfterDebt)}`;
+  
+  document.getElementById('totalQualityScore').textContent = `${r.qualityScore.toFixed(1)} / 10`;
+  
+  document.getElementById('score_customer').textContent = d.customerConcentration;
+  document.getElementById('score_growth').textContent = d.revenueGrowth;
+  document.getElementById('score_margins').textContent = d.margins;
+  document.getElementById('score_owner').textContent = d.ownerInvolvement;
+  document.getElementById('score_employee').textContent = d.employeeDependency;
+  document.getElementById('score_market').textContent = d.marketPosition;
+  document.getElementById('score_barriers').textContent = d.barriers;
+  document.getElementById('score_industry').textContent = d.industryTrends;
+  document.getElementById('score_supplier').textContent = d.supplierDependency;
+  
+  updateIndustryComparison();
+}
+
+function saveDeal() {
+  const d = deals[currentDealIndex];
+  d.name = document.getElementById('businessName').value || 'Unnamed Deal';
+  d.askingPrice = parseFloat(document.getElementById('askingPrice').value) || 0;
+  d.sde = parseFloat(document.getElementById('sde').value) || 0;
+  d.revenue = parseFloat(document.getElementById('revenue').value) || 0;
+  d.grossMargin = parseFloat(document.getElementById('grossMargin').value) || 0;
+  d.inventoryValue = parseFloat(document.getElementById('inventoryValue').value) || 0;
+  d.realEstateValue = parseFloat(document.getElementById('realEstateValue').value) || 0;
+  d.equipmentValue = parseFloat(document.getElementById('equipmentValue').value) || 0;
+  d.downPayment = parseFloat(document.getElementById('downPayment').value) || 0;
+  d.sellerFinancing = parseFloat(document.getElementById('sellerFinancing').value) || 0;
+  d.sellerRate = parseFloat(document.getElementById('sellerRate').value) || 0;
+  d.sellerTerm = parseFloat(document.getElementById('sellerTerm').value) || 0;
+  d.bankLoan = parseFloat(document.getElementById('bankLoan').value) || 0;
+  d.bankRate = parseFloat(document.getElementById('bankRate').value) || 0;
+  d.bankTerm = parseFloat(document.getElementById('bankTerm').value) || 0;
+  d.customerConcentration = parseInt(document.getElementById('customerConcentration').value);
+  d.revenueGrowth = parseInt(document.getElementById('revenueGrowth').value);
+  d.margins = parseInt(document.getElementById('margins').value);
+  d.ownerInvolvement = parseInt(document.getElementById('ownerInvolvement').value);
+  d.employeeDependency = parseInt(document.getElementById('employeeDependency').value);
+  d.marketPosition = parseInt(document.getElementById('marketPosition').value);
+  d.barriers = parseInt(document.getElementById('barriers').value);
+  d.industryTrends = parseInt(document.getElementById('industryTrends').value);
+  d.supplierDependency = parseInt(document.getElementById('supplierDependency').value);
+  d.industryType = document.getElementById('industryType').value;
+}
+
+function loadDeal(index) {
+  const d = deals[index];
+  document.getElementById('businessName').value = d.name;
+  document.getElementById('askingPrice').value = d.askingPrice;
+  document.getElementById('sde').value = d.sde;
+  document.getElementById('revenue').value = d.revenue;
+  document.getElementById('grossMargin').value = d.grossMargin;
+  document.getElementById('inventoryValue').value = d.inventoryValue || 0;
+  document.getElementById('realEstateValue').value = d.realEstateValue || 0;
+  document.getElementById('equipmentValue').value = d.equipmentValue || 0;
+  document.getElementById('downPayment').value = d.downPayment;
+  document.getElementById('sellerFinancing').value = d.sellerFinancing;
+  document.getElementById('sellerRate').value = d.sellerRate;
+  document.getElementById('sellerTerm').value = d.sellerTerm;
+  document.getElementById('bankLoan').value = d.bankLoan;
+  document.getElementById('bankRate').value = d.bankRate;
+  document.getElementById('bankTerm').value = d.bankTerm;
+  document.getElementById('customerConcentration').value = d.customerConcentration;
+  document.getElementById('revenueGrowth').value = d.revenueGrowth;
+  document.getElementById('margins').value = d.margins;
+  document.getElementById('ownerInvolvement').value = d.ownerInvolvement;
+  document.getElementById('employeeDependency').value = d.employeeDependency;
+  document.getElementById('marketPosition').value = d.marketPosition;
+  document.getElementById('barriers').value = d.barriers;
+  document.getElementById('industryTrends').value = d.industryTrends;
+  document.getElementById('supplierDependency').value = d.supplierDependency;
+  document.getElementById('industryType').value = d.industryType || '';
+  
+  if (d.industryData) {
+    displayResearchResults(d.industryData, d.industryType);
+  } else {
+    document.getElementById('researchResults').innerHTML = '';
+    document.getElementById('researchStatus').innerHTML = '';
+  }
+  
+  updateDisplay();
+}
+
+function updateDealSelector() {
+  const selector = document.getElementById('dealSelector');
+  selector.innerHTML = '';
+  for (let i = 0; i < deals.length; i++) {
+    const option = document.createElement('option');
+    option.value = i;
+    option.textContent = `Deal ${i + 1}: ${deals[i].name}`;
+    if (i === currentDealIndex) {
+      option.selected = true;
+    }
+    selector.appendChild(option);
+  }
+}
+
+function updateComparisonTable() {
+  const table = document.createElement('table');
+  table.style.width = '100%';
+  table.style.borderCollapse = 'collapse';
+  
+  const thead = document.createElement('thead');
+  const headerRow = document.createElement('tr');
+  headerRow.style.background = '#2c5282';
+  headerRow.style.color = 'white';
+  
+  const th1 = document.createElement('th');
+  th1.textContent = 'Metric';
+  th1.style.padding = '12px';
+  headerRow.appendChild(th1);
+  
+  for (let i = 0; i < deals.length; i++) {
+    const th = document.createElement('th');
+    th.textContent = deals[i].name;
+    th.style.padding = '12px';
+    th.style.textAlign = 'center';
+    headerRow.appendChild(th);
+  }
+  thead.appendChild(headerRow);
+  table.appendChild(thead);
+  
+  const tbody = document.createElement('tbody');
+  
+  addComparisonRow(tbody, 'Overall Score', deals, d => calcDeal(d).overallScore.toFixed(1), true);
+  addComparisonRow(tbody, 'Asking Price', deals, d => `${formatNumber(d.askingPrice)}`, false);
+  addComparisonRow(tbody, 'SDE', deals, d => `${formatNumber(d.sde)}`, false);
+  addComparisonRow(tbody, 'Total Assets', deals, d => `${formatNumber(calcDeal(d).totalAssets)}`, false);
+  addComparisonRow(tbody, 'Multiple', deals, d => `${calcDeal(d).multiple.toFixed(2)}x`, true);
+  addComparisonRow(tbody, 'Asset-Adjusted Multiple', deals, d => `${calcDeal(d).assetAdjustedMultiple.toFixed(2)}x`, true);
+  addComparisonRow(tbody, 'Cash-on-Cash', deals, d => `${calcDeal(d).cocReturn.toFixed(1)}%`, true);
+  addComparisonRow(tbody, 'Quality Score', deals, d => `${calcDeal(d).qualityScore.toFixed(1)} / 10`, true);
+  
+  table.appendChild(tbody);
+  
+  const container = document.getElementById('comparisonTable');
+  container.innerHTML = '';
+  container.appendChild(table);
+}
+
+function addComparisonRow(tbody, label, deals, valueFunc, highlight) {
+  const row = document.createElement('tr');
+  if (highlight) {
+    row.style.background = '#fef5e7';
+  }
+  
+  const labelCell = document.createElement('td');
+  labelCell.textContent = label;
+  labelCell.style.padding = '10px';
+  labelCell.style.border = '1px solid #e2e8f0';
+  if (highlight) {
+    labelCell.style.fontWeight = 'bold';
+  }
+  row.appendChild(labelCell);
+  
+  for (let i = 0; i < deals.length; i++) {
+    const cell = document.createElement('td');
+    cell.textContent = valueFunc(deals[i]);
+    cell.style.padding = '10px';
+    cell.style.border = '1px solid #e2e8f0';
+    cell.style.textAlign = 'center';
+    if (highlight) {
+      cell.style.fontWeight = 'bold';
+    }
+    row.appendChild(cell);
+  }
+  
+  tbody.appendChild(row);
+}
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', function() {
+    saveDeal();
+    
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    
+    this.classList.add('active');
+    const tabName = this.getAttribute('data-tab');
+    document.getElementById(tabName).classList.add('active');
+    
+    if (tabName === 'comparison') {
+      updateComparisonTable();
+    }
+  });
+});
+
+document.getElementById('dealSelector').addEventListener('change', function() {
+  saveDeal();
+  currentDealIndex = parseInt(this.value);
+  loadDeal(currentDealIndex);
+});
+
+document.getElementById('addDealBtn').addEventListener('click', function() {
+  saveDeal();
+  deals.push({
+    name: `Deal ${deals.length + 1}`,
+    askingPrice: 0,
+    sde: 0,
+    revenue: 0,
+    grossMargin: 0,
+    inventoryValue: 0,
+    realEstateValue: 0,
+    equipmentValue: 0,
+    downPayment: 0,
+    sellerFinancing: 0,
+    sellerRate: 6,
+    sellerTerm: 5,
+    bankLoan: 0,
+    bankRate: 8,
+    bankTerm: 7,
+    customerConcentration: 5,
+    revenueGrowth: 5,
+    margins: 5,
+    ownerInvolvement: 5,
+    employeeDependency: 5,
+    marketPosition: 5,
+    barriers: 5,
+    industryTrends: 5,
+    supplierDependency: 5,
+    industryType: '',
+    industryData: null
+  });
+  currentDealIndex = deals.length - 1;
+  updateDealSelector();
+  loadDeal(currentDealIndex);
+});
+
+document.getElementById('researchBtn').addEventListener('click', function() {
+  researchIndustry();
+});
+
+document.getElementById('exportBtn').addEventListener('click', function() {
+  let csv = 'Metric';
+  for (let i = 0; i < deals.length; i++) {
+    csv += `,${deals[i].name}`;
+  }
+  csv += '\n';
+  
+  csv += 'Overall Score';
+  for (let i = 0; i < deals.length; i++) {
+    const r = calcDeal(deals[i]);
+    csv += `,${r.overallScore.toFixed(1)}`;
+  }
+  csv += '\n\n';
+  
+  csv += 'FINANCIAL METRICS\n';
+  csv += 'Asking Price';
+  for (let i = 0; i < deals.length; i++) {
+    csv += `,${deals[i].askingPrice}`;
+  }
+  csv += '\n';
+  
+  csv += 'SDE';
+  for (let i = 0; i < deals.length; i++) {
+    csv += `,${deals[i].sde}`;
+  }
+  csv += '\n';
+  
+  csv += 'Revenue';
+  for (let i = 0; i < deals.length; i++) {
+    csv += `,${deals[i].revenue}`;
+  }
+  csv += '\n';
+  
+  csv += 'Total Assets';
+  for (let i = 0; i < deals.length; i++) {
+    const r = calcDeal(deals[i]);
+    csv += `,${r.totalAssets}`;
+  }
+  csv += '\n';
+  
+  csv += 'Multiple';
+  for (let i = 0; i < deals.length; i++) {
+    const r = calcDeal(deals[i]);
+    csv += `,${r.multiple.toFixed(2)}`;
+  }
+  csv += '\n';
+  
+  csv += 'Asset-Adjusted Multiple';
+  for (let i = 0; i < deals.length; i++) {
+    const r = calcDeal(deals[i]);
+    csv += `,${r.assetAdjustedMultiple.toFixed(2)}`;
+  }
+  csv += '\n';
+  
+  csv += 'Cash-on-Cash Return';
+  for (let i = 0; i < deals.length; i++) {
+    const r = calcDeal(deals[i]);
+    csv += `,${r.cocReturn.toFixed(1)}`;
+  }
+  csv += '\n\n';
+  
+  csv += 'QUALITY SCORES\n';
+  csv += 'Overall Quality Score';
+  for (let i = 0; i < deals.length; i++) {
+    const r = calcDeal(deals[i]);
+    csv += `,${r.qualityScore.toFixed(1)}`;
+  }
+  csv += '\n';
+  
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'business-acquisition-analysis.csv';
+  a.click();
+});
+
+const inputs = document.querySelectorAll('input');
+for (let i = 0; i < inputs.length; i++) {
+  inputs[i].addEventListener('input', function() {
+    saveDeal();
+    updateDisplay();
+  });
+}
+
+updateDealSelector();
+loadDeal(0);
+</script>
+</body>
+</html>
