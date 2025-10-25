@@ -315,6 +315,9 @@ function calcDeal(d) {
   };
 }
 
+// REPLACE THIS WITH YOUR VERCEL API URL AFTER DEPLOYMENT
+const API_BACKEND_URL = 'https://business-evaluatore-q1hodgk1h-cgs-projects-c7662133.vercel.app';
+
 async function researchIndustry() {
   var industry = document.getElementById('industryType').value;
   if (!industry) {
@@ -324,6 +327,11 @@ async function researchIndustry() {
   
   if (BRAVE_API_KEY === 'YOUR_API_KEY_HERE') {
     alert('Please add your Brave Search API key. Find line with BRAVE_API_KEY in the code and replace YOUR_API_KEY_HERE with your actual key.');
+    return;
+  }
+  
+  if (API_BACKEND_URL === 'https://your-project-name.vercel.app/api/search') {
+    alert('Please update API_BACKEND_URL with your Vercel deployment URL');
     return;
   }
   
@@ -352,29 +360,18 @@ async function researchIndustry() {
       console.log('Searching query ' + (i + 1) + ':', query);
       statusDiv.innerHTML = '<p class="loading">Researching... Query ' + (i + 1) + ' of ' + searchQueries.length + '...</p>';
       
-      var apiUrl = 'https://api.search.brave.com/res/v1/web/search?q=' + encodeURIComponent(query);
-      var corsProxy = 'https://api.allorigins.win/raw?url=';
-      var url = corsProxy + encodeURIComponent(apiUrl);
+      var url = API_BACKEND_URL + '?query=' + encodeURIComponent(query) + '&apiKey=' + encodeURIComponent(BRAVE_API_KEY);
       
-      console.log('Fetching:', url);
+      console.log('Fetching from backend:', url);
       
-      var response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'X-Subscription-Token': BRAVE_API_KEY
-        }
-      });
+      var response = await fetch(url);
       
       console.log('Response status:', response.status);
       
       if (!response.ok) {
-        if (response.status === 429) {
-          throw new Error('Rate limit exceeded. Please wait a minute and try again.');
-        }
-        var errorText = await response.text();
-        console.error('API Error Response:', errorText);
-        throw new Error('API request failed with status ' + response.status);
+        var errorData = await response.json();
+        console.error('API Error Response:', errorData);
+        throw new Error('API request failed: ' + (errorData.error || response.status));
       }
       
       var data = await response.json();
@@ -386,8 +383,8 @@ async function researchIndustry() {
       }
       
       if (i < searchQueries.length - 1) {
-        console.log('Waiting 3 seconds before next request...');
-        await delay(3000);
+        console.log('Waiting 2 seconds before next request...');
+        await delay(2000);
       }
     }
     
@@ -402,7 +399,7 @@ async function researchIndustry() {
     
   } catch (error) {
     console.error('Full error details:', error);
-    statusDiv.innerHTML = '<p style="color:red"><strong>Error:</strong> ' + error.message + '</p><p style="font-size:12px;color:#666;margin-top:10px"><strong>Solutions:</strong><br>1. Wait 60 seconds and try again (rate limit)<br>2. Use the Manual Industry Benchmarks section below<br>3. Research on BizBuySell.com or Google and enter data manually</p>';
+    statusDiv.innerHTML = '<p style="color:red"><strong>Error:</strong> ' + error.message + '</p><p style="font-size:12px;color:#666;margin-top:10px"><strong>Solutions:</strong><br>1. Check that your Vercel backend is deployed<br>2. Verify API_BACKEND_URL is correct<br>3. Use Manual Industry Benchmarks section below</p>';
   }
 }
 
