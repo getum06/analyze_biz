@@ -187,7 +187,6 @@ input[type="range"]{width:100%}
 </div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.26.0/babel.min.js"></script>
-<script type="text/babel">
 const BRAVE_API_KEY = 'BSAnsqsEBTGyvdcNuJf0dMxSiGqWG55';
 
 let deals = [{
@@ -222,38 +221,49 @@ let deals = [{
 let currentDealIndex = 0;
 
 function formatNumber(num) {
-  return Math.round(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  var str = Math.round(num).toString();
+  var result = '';
+  var count = 0;
+  for (var i = str.length - 1; i >= 0; i--) {
+    if (count === 3) {
+      result = ',' + result;
+      count = 0;
+    }
+    result = str[i] + result;
+    count++;
+  }
+  return result;
 }
 
 function calcDeal(d) {
-  const multiple = d.sde > 0 ? d.askingPrice / d.sde : 0;
-  const totalAssets = (d.inventoryValue || 0) + (d.realEstateValue || 0) + (d.equipmentValue || 0);
-  const adjustedPrice = d.askingPrice - totalAssets;
-  const assetAdjustedMultiple = d.sde > 0 ? adjustedPrice / d.sde : 0;
+  var multiple = d.sde > 0 ? d.askingPrice / d.sde : 0;
+  var totalAssets = (d.inventoryValue || 0) + (d.realEstateValue || 0) + (d.equipmentValue || 0);
+  var adjustedPrice = d.askingPrice - totalAssets;
+  var assetAdjustedMultiple = d.sde > 0 ? adjustedPrice / d.sde : 0;
   
-  const sellerMonthlyRate = d.sellerRate / 100 / 12;
-  const sellerPayments = d.sellerTerm * 12;
-  let sellerMonthlyPayment = 0;
+  var sellerMonthlyRate = d.sellerRate / 100 / 12;
+  var sellerPayments = d.sellerTerm * 12;
+  var sellerMonthlyPayment = 0;
   if (d.sellerFinancing > 0 && sellerMonthlyRate > 0) {
-    const temp = Math.pow(1 + sellerMonthlyRate, sellerPayments);
+    var temp = Math.pow(1 + sellerMonthlyRate, sellerPayments);
     sellerMonthlyPayment = d.sellerFinancing * (sellerMonthlyRate * temp) / (temp - 1);
   }
   
-  const bankMonthlyRate = d.bankRate / 100 / 12;
-  const bankPayments = d.bankTerm * 12;
-  let bankMonthlyPayment = 0;
+  var bankMonthlyRate = d.bankRate / 100 / 12;
+  var bankPayments = d.bankTerm * 12;
+  var bankMonthlyPayment = 0;
   if (d.bankLoan > 0 && bankMonthlyRate > 0) {
-    const temp = Math.pow(1 + bankMonthlyRate, bankPayments);
+    var temp = Math.pow(1 + bankMonthlyRate, bankPayments);
     bankMonthlyPayment = d.bankLoan * (bankMonthlyRate * temp) / (temp - 1);
   }
   
-  const annualDebtService = (sellerMonthlyPayment + bankMonthlyPayment) * 12;
-  const cashFlowAfterDebt = d.sde - annualDebtService;
-  const cocReturn = d.downPayment > 0 ? (cashFlowAfterDebt / d.downPayment) * 100 : 0;
-  const paybackPeriod = cashFlowAfterDebt > 0 ? d.downPayment / cashFlowAfterDebt : 999;
-  const roi = d.askingPrice > 0 ? (d.sde / d.askingPrice) * 100 : 0;
+  var annualDebtService = (sellerMonthlyPayment + bankMonthlyPayment) * 12;
+  var cashFlowAfterDebt = d.sde - annualDebtService;
+  var cocReturn = d.downPayment > 0 ? (cashFlowAfterDebt / d.downPayment) * 100 : 0;
+  var paybackPeriod = cashFlowAfterDebt > 0 ? d.downPayment / cashFlowAfterDebt : 999;
+  var roi = d.askingPrice > 0 ? (d.sde / d.askingPrice) * 100 : 0;
   
-  const qualityScore = 
+  var qualityScore = 
     d.customerConcentration * 0.15 +
     d.revenueGrowth * 0.12 +
     d.margins * 0.12 +
@@ -264,7 +274,7 @@ function calcDeal(d) {
     d.industryTrends * 0.10 +
     d.supplierDependency * 0.08;
   
-  let financialScore = 0;
+  var financialScore = 0;
   if (multiple <= 2.5) financialScore += 25;
   else if (multiple <= 3.5) financialScore += 20;
   else if (multiple <= 4.5) financialScore += 15;
@@ -289,56 +299,66 @@ function calcDeal(d) {
   else if (roi >= 18) financialScore += 10;
   else financialScore += 5;
   
-  const overallScore = (financialScore * 0.6) + (qualityScore * 10 * 0.4);
+  var overallScore = (financialScore * 0.6) + (qualityScore * 10 * 0.4);
   
   return {
-    multiple,
-    totalAssets,
-    assetAdjustedMultiple,
-    cocReturn,
-    paybackPeriod,
-    roi,
-    annualDebtService,
-    cashFlowAfterDebt,
-    qualityScore,
-    overallScore
+    multiple: multiple,
+    totalAssets: totalAssets,
+    assetAdjustedMultiple: assetAdjustedMultiple,
+    cocReturn: cocReturn,
+    paybackPeriod: paybackPeriod,
+    roi: roi,
+    annualDebtService: annualDebtService,
+    cashFlowAfterDebt: cashFlowAfterDebt,
+    qualityScore: qualityScore,
+    overallScore: overallScore
   };
 }
 
 async function researchIndustry() {
-  const industry = document.getElementById('industryType').value;
+  var industry = document.getElementById('industryType').value;
   if (!industry) {
     alert('Please select an industry first');
     return;
   }
   
   if (BRAVE_API_KEY === 'YOUR_API_KEY_HERE') {
-    alert('Please add your Brave Search API key on line 327');
+    alert('Please add your Brave Search API key. Find line with BRAVE_API_KEY in the code and replace YOUR_API_KEY_HERE with your actual key.');
     return;
   }
   
-  const statusDiv = document.getElementById('researchStatus');
-  statusDiv.innerHTML = '<p class="loading">Researching... This may take a few seconds.</p>';
+  var statusDiv = document.getElementById('researchStatus');
+  statusDiv.innerHTML = '<p class="loading">Researching... This will take about 10 seconds.</p>';
   
   console.log('Starting research for:', industry);
   
-  const searchQueries = [
-    `${industry} business typical valuation multiple 2024`,
-    `${industry} business industry trends growth rate`,
-    `${industry} small business acquisition multiples`
+  var searchQueries = [
+    industry + ' business typical valuation multiple 2024',
+    industry + ' business industry trends growth rate',
+    industry + ' small business acquisition multiples'
   ];
   
-  let allResults = [];
+  var allResults = [];
+  
+  function delay(ms) {
+    return new Promise(function(resolve) {
+      setTimeout(resolve, ms);
+    });
+  }
   
   try {
-    for (let i = 0; i < searchQueries.length; i++) {
-      const query = searchQueries[i];
-      console.log(`Searching query ${i + 1}:`, query);
+    for (var i = 0; i < searchQueries.length; i++) {
+      var query = searchQueries[i];
+      console.log('Searching query ' + (i + 1) + ':', query);
+      statusDiv.innerHTML = '<p class="loading">Researching... Query ' + (i + 1) + ' of ' + searchQueries.length + '...</p>';
       
-      const corsProxy = 'https://corsproxy.io/?';
-      const url = `${corsProxy}${encodeURIComponent(`https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(query)}`)}`;
+      var apiUrl = 'https://api.search.brave.com/res/v1/web/search?q=' + encodeURIComponent(query);
+      var corsProxy = 'https://api.allorigins.win/raw?url=';
+      var url = corsProxy + encodeURIComponent(apiUrl);
       
-      const response = await fetch(url, {
+      console.log('Fetching:', url);
+      
+      var response = await fetch(url, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
@@ -349,27 +369,40 @@ async function researchIndustry() {
       console.log('Response status:', response.status);
       
       if (!response.ok) {
-        const errorText = await response.text();
+        if (response.status === 429) {
+          throw new Error('Rate limit exceeded. Please wait a minute and try again.');
+        }
+        var errorText = await response.text();
         console.error('API Error Response:', errorText);
-        throw new Error(`API request failed with status ${response.status}`);
+        throw new Error('API request failed with status ' + response.status);
       }
       
-      const data = await response.json();
+      var data = await response.json();
       console.log('API Response data:', data);
       
       if (data.web && data.web.results) {
         allResults = allResults.concat(data.web.results.slice(0, 3));
-        console.log(`Found ${data.web.results.length} results for query ${i + 1}`);
+        console.log('Found ' + data.web.results.length + ' results for query ' + (i + 1));
+      }
+      
+      if (i < searchQueries.length - 1) {
+        console.log('Waiting 3 seconds before next request...');
+        await delay(3000);
       }
     }
     
     console.log('Total results found:', allResults.length);
-    displayResearchResults(allResults, industry);
-    deals[currentDealIndex].industryData = allResults;
+    
+    if (allResults.length === 0) {
+      statusDiv.innerHTML = '<p style="color:orange"><strong>Note:</strong> No results found. You can manually enter industry benchmarks below.</p>';
+    } else {
+      displayResearchResults(allResults, industry);
+      deals[currentDealIndex].industryData = allResults;
+    }
     
   } catch (error) {
     console.error('Full error details:', error);
-    statusDiv.innerHTML = `<p style="color:red"><strong>Error:</strong> ${error.message}</p><p style="font-size:12px;color:#666">The API request failed. This might be due to:<br>1. Invalid API key<br>2. CORS proxy issue<br>3. Network connection<br><br>Try using GitHub Pages instead of running locally.</p>`;
+    statusDiv.innerHTML = '<p style="color:red"><strong>Error:</strong> ' + error.message + '</p><p style="font-size:12px;color:#666;margin-top:10px"><strong>Solutions:</strong><br>1. Wait 60 seconds and try again (rate limit)<br>2. Use the Manual Industry Benchmarks section below<br>3. Research on BizBuySell.com or Google and enter data manually</p>';
   }
 }
 
