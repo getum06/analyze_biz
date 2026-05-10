@@ -1,0 +1,57 @@
+generator client {
+  provider        = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Deal {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Source
+  sourceUrl String?
+  rawText   String?
+
+  // Basic info
+  businessName String?
+  address      String?
+  city         String?
+  state        String?
+
+  // Financials
+  askingPrice  Float?
+  grossRevenue Float?
+  sde          Float?
+  ebitda       Float?
+  rent         Float?
+  leaseTerms   String?
+  squareFeet   Float?
+  employees    Int?
+
+  // Machine data (JSON)
+  machines String?
+
+  // Services (JSON)
+  services String?
+
+  sellerNotes          String?
+  extractionConfidence Float?
+  missingFields        String?
+
+  // Market data (JSON)
+  marketData String?
+
+  // Cash flow model (JSON)
+  cashFlowModel String?
+
+  // Deal score (JSON)
+  dealScore String?
+
+  // Investment memo
+  investmentMemo String?
+
+  status String @default("draft")
+}
